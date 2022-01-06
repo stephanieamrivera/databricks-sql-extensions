@@ -162,7 +162,6 @@ class EndpointUse:
         ctx.current_endpoint = name
         ctx.current_endpoint_obj = ep
         ctx.resp = [{"current_endpoint": name}]
-        ctx.resp_type = SQL_ENDPOINT_STRUCT_TYPE
         return ctx
 
 
