@@ -1,10 +1,14 @@
 from __future__ import print_function
-from IPython.core.magic import Magics, magics_class, line_magic, cell_magic
-from sqle.execution import parseSql, Context, Statement
+
 import pandas as pd
 from databricks_cli.sdk import ApiClient
 
+from sqle.execution import parseSql, Context, Statement
+
+
 def patch_sqle(host, token, spark, display, debug=False):
+    from IPython.core.magic import Magics, magics_class, cell_magic
+
     @magics_class
     class SqlExtensions(Magics):
 
@@ -25,8 +29,8 @@ def patch_sqle(host, token, spark, display, debug=False):
                 if self.ctx.resp is not None and isinstance(self.ctx.resp, pd.DataFrame):
                     display(self.ctx.resp)
                 if self.ctx.resp is not None and isinstance(self.ctx.resp, list):
-                    print(self.ctx.resp)
-                    df= spark.createDataFrame(self.ctx.resp, schema=self.ctx.resp_type if self.ctx.resp_type is not None else None)
+                    df = spark.createDataFrame(self.ctx.resp,
+                                               schema=self.ctx.resp_type if self.ctx.resp_type is not None else None)
                     display(df)
                 # flush responses after displaying
                 self.ctx.resp = None

@@ -93,9 +93,9 @@ class EndpointCreate:
                      "min_num_clusters": 1, "max_num_clusters": 1}
         options = {i.key: i.value for i in self.options}
         ctx.resp = [SqlEndpointsService(client).create(name,
-                                                      {**base_json, **options},
-                                                      if_not_exists=self.if_not_exists,
-                                                      or_replace=self.with_replacement).to_dict()]
+                                                       {**base_json, **options},
+                                                       if_not_exists=self.if_not_exists,
+                                                       or_replace=self.with_replacement).to_dict()]
         ctx.resp_type = SQL_ENDPOINT_STRUCT_TYPE
         return ctx
 
@@ -140,7 +140,7 @@ class EndpointDrop:
     def execute(self, ctx: Context) -> Context:
         name = self.name.value
         client = ctx.client
-        SqlEndpointsService(client).delete(name)
+        SqlEndpointsService(client).delete(name, exists=self.if_exists)
         if ctx.current_endpoint == name:
             ctx.current_endpoint = None
             ctx.current_endpoint_obj = None
@@ -158,7 +158,8 @@ class EndpointUse:
         client = ctx.client
         ep = SqlEndpointsService(client).get_by_name(name)
         if ep is None:
-            raise EndpointError(f"No endpoint with name {name} exists! Please create one using 'CREATE ENDPOINT {name};'")
+            raise EndpointError(
+                f"No endpoint with name {name} exists! Please create one using 'CREATE ENDPOINT {name};'")
         ctx.current_endpoint = name
         ctx.current_endpoint_obj = ep
         ctx.resp = [{"current_endpoint": name}]

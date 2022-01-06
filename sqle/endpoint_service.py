@@ -22,9 +22,6 @@ class SqlEndpoints:
         return pd.DataFrame(self.endpoints)
 
 
-
-
-
 @dataclass_json
 @dataclass
 class SqlEndpoints:
@@ -37,15 +34,18 @@ class SqlEndpoints:
 SQL_ENDPOINT_STRUCT_TYPE = StructType(
     [StructField("auto_resume", BooleanType(), True), StructField("auto_stop_mins", LongType(), True),
      StructField("channel", StringType(), True), StructField("cluster_size", StringType(), True),
-     StructField("conf_pairs", MapType(StringType(), StringType(), True), True), StructField("creator_id", LongType(), True),
+     StructField("conf_pairs", MapType(StringType(), StringType(), True), True),
+     StructField("creator_id", LongType(), True),
      StructField("creator_name", StringType(), True), StructField("enable_photon", BooleanType(), True),
      StructField("enable_serverless_compute", BooleanType(), True), StructField("id", StringType(), True),
      StructField("jdbc_url", StringType(), True), StructField("max_num_clusters", LongType(), True),
      StructField("min_num_clusters", LongType(), True), StructField("name", StringType(), True),
      StructField("num_active_sessions", LongType(), True), StructField("num_clusters", LongType(), True),
-     StructField("odbc_params", MapType(StringType(), StringType(), True), True), StructField("size", StringType(), True),
+     StructField("odbc_params", MapType(StringType(), StringType(), True), True),
+     StructField("size", StringType(), True),
      StructField("spot_instance_policy", StringType(), True), StructField("state", StringType(), True),
      StructField("tags", MapType(StringType(), StringType(), True), True)])
+
 
 @dataclass_json
 @dataclass
@@ -87,8 +87,10 @@ class OdbcParam:
     protocol: str
     port: int
 
+
 class EndpointError(Exception):
     pass
+
 
 class SqlEndpointsService(object):
     def __init__(self, client: ApiClient):
@@ -128,7 +130,8 @@ class SqlEndpointsService(object):
 
     def get(self, id_, headers=None) -> SqlEndpoint:
         _data = {}
-        return SqlEndpoint.from_dict(self.client.perform_query('GET', f'{self.endpoint_name}/{id_}', data=_data, headers=headers))
+        return SqlEndpoint.from_dict(
+            self.client.perform_query('GET', f'{self.endpoint_name}/{id_}', data=_data, headers=headers))
 
     def get_by_name(self, name, headers=None) -> Optional[SqlEndpoint]:
         _data = {}
@@ -180,8 +183,7 @@ class SqlEndpointsService(object):
             raise EndpointError(f"Requested endpoint to be started but not started instead moved to: {state}")
         return
 
-
-    def stop(self, name,exists=False, headers=None):
+    def stop(self, name, exists=False, headers=None):
         ep = self.get_by_name(name)
         if exists is True and ep is None:
             return
@@ -197,7 +199,7 @@ class SqlEndpointsService(object):
         return
 
     # MAYBE GLOBAL CONTEXT CAN HAVE CONNECTION Object and cursor is generated on query call
-    def run_sql(self, name, sql_stmt, access_token,limit=1000):
+    def run_sql(self, name, sql_stmt, access_token, limit=1000):
         ep = self.get_by_name(name)
         if ep == None:
             raise EndpointError(f"No endpoint with name {name} exists!")
@@ -209,13 +211,16 @@ class SqlEndpointsService(object):
         cursor = connection.cursor()
 
         cursor.execute(sql_stmt)
+
         def get_columns(desc):
             return [i[0] for i in desc]
+
         df = DataFrame(cursor.fetchmany(size=limit))
         df.columns = get_columns(cursor.description)
         cursor.close()
         connection.close()
 
+
 @dataclass_json
 @dataclass
 class SqlEndpoint:
@@ -256,8 +261,10 @@ class OdbcParam:
     protocol: str
     port: int
 
+
 class EndpointError(Exception):
     pass
+
 
 class SqlEndpointsService(object):
     def __init__(self, client: ApiClient):
@@ -297,7 +304,8 @@ class SqlEndpointsService(object):
 
     def get(self, id_, headers=None) -> SqlEndpoint:
         _data = {}
-        return SqlEndpoint.from_dict(self.client.perform_query('GET', f'{self.endpoint_name}/{id_}', data=_data, headers=headers))
+        return SqlEndpoint.from_dict(
+            self.client.perform_query('GET', f'{self.endpoint_name}/{id_}', data=_data, headers=headers))
 
     def get_by_name(self, name, headers=None) -> Optional[SqlEndpoint]:
         _data = {}
@@ -349,8 +357,7 @@ class SqlEndpointsService(object):
             raise EndpointError(f"Requested endpoint to be started but not started instead moved to: {state}")
         return
 
-
-    def stop(self, name,exists=False, headers=None):
+    def stop(self, name, exists=False, headers=None):
         ep = self.get_by_name(name)
         if exists is True and ep is None:
             return
@@ -366,7 +373,7 @@ class SqlEndpointsService(object):
         return
 
     # MAYBE GLOBAL CONTEXT CAN HAVE CONNECTION Object and cursor is generated on query call
-    def run_sql(self, name, sql_stmt, access_token,limit=1000):
+    def run_sql(self, name, sql_stmt, access_token, limit=1000):
         ep = self.get_by_name(name)
         if ep == None:
             raise EndpointError(f"No endpoint with name {name} exists!")
@@ -378,8 +385,10 @@ class SqlEndpointsService(object):
         cursor = connection.cursor()
 
         cursor.execute(sql_stmt)
+
         def get_columns(desc):
             return [i[0] for i in desc]
+
         df = DataFrame(cursor.fetchmany(size=limit))
         df.columns = get_columns(cursor.description)
         cursor.close()
