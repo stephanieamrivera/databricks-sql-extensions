@@ -1,9 +1,16 @@
 import time
 from dataclasses import dataclass
-from typing import List
+from typing import List, Dict, Optional, Any
 
+import pandas as pd
 import requests.exceptions
+import requests.exceptions
+from databricks import sql
+from databricks_cli.sdk import ApiClient
 from dataclasses_json import dataclass_json
+from pandas import DataFrame
+from pyspark.sql.types import StructType, StructField, BooleanType, LongType, StringType, MapType
+from timeout_decorator import timeout_decorator
 
 
 @dataclass_json
@@ -15,17 +22,7 @@ class SqlEndpoints:
         return pd.DataFrame(self.endpoints)
 
 
-from dataclasses import dataclass
-from typing import List, Dict, Optional, Any
 
-import pandas as pd
-import requests.exceptions
-from databricks import sql
-from databricks_cli.sdk import ApiClient
-from dataclasses_json import dataclass_json
-from pandas import DataFrame
-from pyspark.sql.types import StructType, StructField, BooleanType, LongType, StringType, MapType
-from timeout_decorator import timeout_decorator
 
 
 @dataclass_json
@@ -387,3 +384,4 @@ class SqlEndpointsService(object):
         df.columns = get_columns(cursor.description)
         cursor.close()
         connection.close()
+        return df
