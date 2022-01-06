@@ -89,6 +89,7 @@ var keyWords = []string{
 	"AND",
 	"OR",
 	"LIKE",
+	"ILIKE",
 	"AS",
 	"IN",
 }

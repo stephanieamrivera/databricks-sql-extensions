@@ -32,7 +32,8 @@ type EndpointAlter struct {
 }
 
 type EndpointShow struct {
-	EndpointFilter string `json:"endpoint_filter,omitempty" parser:"'SHOW' 'ENDPOINTS' ('LIKE' @String)?"`
+	EndpointFilter                string `json:"endpoint_filter,omitempty" parser:"'SHOW' 'ENDPOINTS' ( ('LIKE' @String)?" | `
+	EndpointFilterCaseInsensitive string `json:"endpoint_filter_case_insensitive,omitempty" parser:" ('ILIKE' @String)? )" `
 }
 
 type EndpointDrop struct {

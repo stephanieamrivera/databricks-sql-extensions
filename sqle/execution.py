@@ -1,4 +1,5 @@
 import ctypes
+import fnmatch
 import functools
 import json
 import os
@@ -123,10 +124,27 @@ class EndpointAlter:
 @dataclass
 class EndpointShow:
     endpoint_filter: Optional[str] = None
+    endpoint_filter_case_insensitive: Optional[str] = None
 
     def execute(self, ctx: Context) -> Context:
         client = ctx.client
-        ctx.resp = [s.to_dict() for s in SqlEndpointsService(client).list().endpoints]
+        result_set = []
+        filter_is_set = self.endpoint_filter is not None or self.endpoint_filter_case_insensitive is not None
+        endpoint_filter_pat = None
+        if self.endpoint_filter is not None:
+            endpoint_filter_pat = self.endpoint_filter.replace("%", "*")
+        if self.endpoint_filter_case_insensitive is not None:
+            endpoint_filter_pat = self.endpoint_filter_case_insensitive.lower().replace("%", "*")
+        for s in SqlEndpointsService(client).list().endpoints:
+            name = s.name
+            # handle if case insensitive is set
+            if self.endpoint_filter_case_insensitive is not None:
+                name = name.lower()
+            match_with_filter = filter_is_set and fnmatch.fnmatch(name, endpoint_filter_pat)
+            if match_with_filter or (not filter_is_set):
+                result_set.append(s.to_dict())
+
+        ctx.resp = result_set
         ctx.resp_type = SQL_ENDPOINT_STRUCT_TYPE
         return ctx
 
