@@ -6,7 +6,7 @@ import os
 import platform
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union, List, Optional, Any
+from typing import Union, List, Optional, Any, Dict
 
 import pandas as pd
 from databricks_cli.sdk import ApiClient
@@ -73,7 +73,7 @@ class Context:
     session_token: str
     current_endpoint: Optional[str] = None
     current_endpoint_obj: Optional[SqlEndpoint] = None
-    resp: Any = None
+    resp: Optional[Union[pd.DataFrame, List[Dict[str, Any]]]] = None
 
 
 @dataclass_json
@@ -91,10 +91,10 @@ class EndpointCreate:
         base_json = {"name": name, "cluster_size": "2X-Small", "auto_stop_mins": "10",
                      "min_num_clusters": 1, "max_num_clusters": 1}
         options = {i.key: i.value for i in self.options}
-        ctx.resp = pd.DataFrame([SqlEndpointsService(client).create(name,
+        ctx.resp = [SqlEndpointsService(client).create(name,
                                                       {**base_json, **options},
                                                       if_not_exists=self.if_not_exists,
-                                                      or_replace=self.with_replacement)])
+                                                      or_replace=self.with_replacement).to_dict()]
         return ctx
 
 
@@ -113,7 +113,7 @@ class EndpointAlter:
             ctx.resp = SqlEndpointsService(client).stop(name, exists=self.if_exists)
         if self.resume is True:
             ctx.resp = SqlEndpointsService(client).start(name, exists=self.if_exists)
-        ctx.resp = pd.DataFrame([{"endpoint": name, "operation": "suspend" if self.suspend is True else "resume"}])
+        ctx.resp = [{"endpoint": name, "operation": "suspend" if self.suspend is True else "resume"}]
         return ctx
 
 
@@ -124,7 +124,7 @@ class EndpointShow:
 
     def execute(self, ctx: Context) -> Context:
         client = ctx.client
-        ctx.resp = pd.DataFrame([s for s in SqlEndpointsService(client).list().endpoints])
+        ctx.resp = [s.to_dict() for s in SqlEndpointsService(client).list().endpoints]
         return ctx
 
 
@@ -141,7 +141,7 @@ class EndpointDrop:
         if ctx.current_endpoint == name:
             ctx.current_endpoint = None
             ctx.current_endpoint_obj = None
-        ctx.resp = pd.DataFrame([{"DELETED ENDPOINT": name}])
+        ctx.resp = [{"DELETED ENDPOINT": name}]
         return ctx
 
 
@@ -155,7 +155,7 @@ class EndpointUse:
         client = ctx.client
         ctx.current_endpoint = name
         ctx.current_endpoint_obj = SqlEndpointsService(client).get_by_name(name)
-        ctx.resp = pd.DataFrame([{"current_endpoint": name}])
+        ctx.resp = [{"current_endpoint": name}]
         return ctx
 
 
