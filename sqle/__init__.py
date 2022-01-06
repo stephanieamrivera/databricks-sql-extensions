@@ -4,7 +4,7 @@ from sqle.execution import parseSql, Context, Statement
 import pandas as pd
 from databricks_cli.sdk import ApiClient
 
-def patch_sqle(host, token, spark, debug=False):
+def patch_sqle(host, token, spark, display, debug=False):
     @magics_class
     class SqlExtensions(Magics):
 
