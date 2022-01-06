@@ -1,5 +1,4 @@
 import ctypes
-import ctypes
 import functools
 import json
 import os
@@ -10,9 +9,10 @@ from typing import Union, List, Optional, Any, Dict
 
 import pandas as pd
 from databricks_cli.sdk import ApiClient
-from dataclasses_json import dataclass_json, LetterCase
+from dataclasses_json import dataclass_json
+from pyspark.sql.types import StructType
 
-from sqle.endpoint_service import SqlEndpointsService, SqlEndpoint, EndpointError
+from sqle.endpoint_service import SqlEndpointsService, SqlEndpoint, EndpointError, SQL_ENDPOINT_STRUCT_TYPE
 
 
 @functools.lru_cache(maxsize=None)
@@ -74,6 +74,7 @@ class Context:
     current_endpoint: Optional[str] = None
     current_endpoint_obj: Optional[SqlEndpoint] = None
     resp: Optional[Union[pd.DataFrame, List[Dict[str, Any]]]] = None
+    resp_type: Optional[StructType] = None
 
 
 @dataclass_json
@@ -95,6 +96,7 @@ class EndpointCreate:
                                                       {**base_json, **options},
                                                       if_not_exists=self.if_not_exists,
                                                       or_replace=self.with_replacement).to_dict()]
+        ctx.resp_type = SQL_ENDPOINT_STRUCT_TYPE
         return ctx
 
 
@@ -125,6 +127,7 @@ class EndpointShow:
     def execute(self, ctx: Context) -> Context:
         client = ctx.client
         ctx.resp = [s.to_dict() for s in SqlEndpointsService(client).list().endpoints]
+        ctx.resp_type = SQL_ENDPOINT_STRUCT_TYPE
         return ctx
 
 
@@ -153,9 +156,13 @@ class EndpointUse:
     def execute(self, ctx: Context) -> Context:
         name = self.name.value
         client = ctx.client
+        ep = SqlEndpointsService(client).get_by_name(name)
+        if ep is None:
+            raise EndpointError(f"No endpoint with name {name} exists! Please create one using 'CREATE ENDPOINT {name};'")
         ctx.current_endpoint = name
-        ctx.current_endpoint_obj = SqlEndpointsService(client).get_by_name(name)
+        ctx.current_endpoint_obj = ep
         ctx.resp = [{"current_endpoint": name}]
+        ctx.resp_type = SQL_ENDPOINT_STRUCT_TYPE
         return ctx
 
 
